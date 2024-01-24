@@ -106,29 +106,13 @@ footer a {
 }
 
 .pageContainer {
-  padding: 30px 50px;
+  padding: 20px 50px;
   background-color: #fff;
   box-shadow: 0px 6px 18px rgba(0, 0, 0, 0.06);
   border-radius: 5px;
   max-width: 900px;
   width: 100%;
-  margin: 96px auto;
-}
-
-.headline {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.headline span {
-  background-color: #f5f6f8;
-  border-radius: 5px;
-  padding: 6px;
-  margin-left: 12px;
-  font-size: 16px;
-  font-weight: 700;
-  text-transform: uppercase;
+  margin: 10px auto;
 }
 
 .reportContainer {
@@ -137,11 +121,9 @@ footer a {
 }
 
 .statusContainer {
-  border: 1px solid #ededed;
   border-radius: 5px;
-  padding-top: 20px;
+  padding-top: 10px;
   text-align: left;
-  padding: 24px;
 }
 
 .statusContainer + .statusContainer {
