@@ -9,7 +9,27 @@ jobs:
     runs-on: ubuntu-latest
     name: Check all sites
     steps:
+      - name: Setup Git
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+
       - uses: actions/checkout@v2
-      - name: Run Shell Script
-        id: shell_script_run
-        run: bash ./health-check.sh
+      - name: Install PHP
+        uses: shivammathur/setup-php@v2
+      - name: Testing PHP version
+        run: php -v
+      - name: Run PHP Script
+        run: php ./health-check.php
+        env:
+          PROD: ${{ secrets.ProdURL }}
+          DEV: ${{ secrets.DevURL }}
+          TRAINING: ${{ secrets.TrainingURL }}
+          TEST: ${{ secrets.TestURL }}
+          #HOOK: ${{ secrets.HookURL }}
+
+      - name: Commit changes
+        run: |
+          git add .
+          git commit -m "Update stats" || echo "No changes to commit"
+          git push origin ${{ env.BRANCH_NAME }}

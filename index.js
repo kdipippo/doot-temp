@@ -1,21 +1,21 @@
 const maxDays = 30;
 
-async function genReportLog(container, key, url) {
-  const response = await fetch("logs/" + key + "_report.log");
+async function genReportLog(container, env) {
+  const response = await fetch("logs/" + env + "_report.log");
   let statusLines = "";
   if (response.ok) {
     statusLines = await response.text();
   }
 
   const normalized = normalizeData(statusLines);
-  const statusStream = constructStatusStream(key, url, normalized);
+  const statusStream = constructStatusStream(env, normalized);
   container.appendChild(statusStream);
 }
 
-function constructStatusStream(key, url, uptimeData) {
+function constructStatusStream(env, uptimeData) {
   let streamContainer = templatize("statusStreamContainerTemplate");
   for (var ii = maxDays - 1; ii >= 0; ii--) {
-    let line = constructStatusLine(key, ii, uptimeData[ii]);
+    let line = constructStatusLine(env, ii, uptimeData[ii]);
     streamContainer.appendChild(line);
   }
 
@@ -23,8 +23,7 @@ function constructStatusStream(key, url, uptimeData) {
   const color = getColor(lastSet);
 
   const container = templatize("statusContainerTemplate", {
-    title: key,
-    url: url,
+    title: env,
     color: color,
     status: getStatusText(color),
     upTime: uptimeData.upTime,
@@ -34,32 +33,43 @@ function constructStatusStream(key, url, uptimeData) {
   return container;
 }
 
-function constructStatusLine(key, relDay, upTimeArray) {
+function constructStatusLine(env, relDay, upTimeArray) {
   let date = new Date();
   date.setDate(date.getDate() - relDay);
 
-  return constructStatusSquare(key, date, upTimeArray);
+  return constructStatusSquare(env, date, upTimeArray);
 }
 
+/**
+ * Return color string depending on result of uptime value percentage.
+ *
+ * @param {float} uptimeVal
+ *   Percentage for uptime.
+ * @returns
+ *   String for color name, one of "nodata", "success", "partial", "failure".
+ */
 function getColor(uptimeVal) {
-  return uptimeVal == null
-    ? "nodata"
-    : uptimeVal == 1
-    ? "success"
-    : uptimeVal < 0.3
-    ? "failure"
-    : "partial";
+  if (uptimeVal == null) {
+    return "nodata";
+  }
+  if (uptimeVal == 1) {
+    return "success";
+  }
+  if (uptimeVal < 0.3) {
+    return "partial";
+  }
+  return "failure";
 }
 
-function constructStatusSquare(key, date, uptimeVal) {
+function constructStatusSquare(env, date, uptimeVal) {
   const color = getColor(uptimeVal);
   let square = templatize("statusSquareTemplate", {
     color: color,
-    tooltip: getTooltip(key, date, color),
+    tooltip: getTooltip(env, date, color),
   });
 
   const show = () => {
-    showTooltip(square, key, date, color);
+    showTooltip(square, env, date, color);
   };
   square.addEventListener("mouseover", show);
   square.addEventListener("mousedown", show);
@@ -106,28 +116,46 @@ function templatizeString(text, parameters) {
   return text;
 }
 
+/**
+ * Return display text based on color of uptime box.
+ *
+ * @param {string} color
+ *   Color CSS class name.
+ * @returns {string}
+ *   Display text for UI view of associated color.
+ */
 function getStatusText(color) {
-  return color == "nodata"
-    ? "No Data Available"
-    : color == "success"
-    ? "Fully Operational"
-    : color == "failure"
-    ? "Major Outage"
-    : color == "partial"
-    ? "Partial Outage"
-    : "Unknown";
+  let statusTexts = {
+    "nodata": "No Data Available",
+    "success": "Fully Operational",
+    "failure": "Major Outage",
+    "partial": "Partial Outage"
+  };
+  if (color in statusTexts) {
+    return statusTexts[color];
+  }
+  return "Unknown";
 }
 
+/**
+ * Return descriptive display text based on color of uptime box.
+ *
+ * @param {string} color
+ *   Color CSS class name.
+ * @returns {string}
+ *   Descriptive display text for UI view of associated color.
+ */
 function getStatusDescriptiveText(color) {
-  return color == "nodata"
-    ? "No Data Available: Health check was not performed."
-    : color == "success"
-    ? "No downtime recorded on this day."
-    : color == "failure"
-    ? "Major outages recorded on this day."
-    : color == "partial"
-    ? "Partial outages recorded on this day."
-    : "Unknown";
+  let statusTexts = {
+    "nodata": "No Data Available: Health check was not performed.",
+    "success": "No downtime recorded on this day.",
+    "failure": "Major outages recorded on this day.",
+    "partial": "Partial outages recorded on this day.",
+  };
+  if (color in statusTexts) {
+    return statusTexts[color];
+  }
+  return "Unknown";
 }
 
 function getTooltip(key, date, quartile, color) {
@@ -237,16 +265,10 @@ function hideTooltip() {
 }
 
 async function genAllReports() {
-  const response = await fetch("urls.cfg");
-  const configText = await response.text();
-  const configLines = configText.split("\n");
+  const configLines = ["PROD","DEV","TEST","TRAINING","TRDEV"];
   for (let ii = 0; ii < configLines.length; ii++) {
-    const configLine = configLines[ii];
-    const [key, url] = configLine.split("=");
-    if (!key || !url) {
-      continue;
-    }
+    const env = configLines[ii];
 
-    await genReportLog(document.getElementById("reports"), key, url);
+    await genReportLog(document.getElementById("reports"), env);
   }
 }
