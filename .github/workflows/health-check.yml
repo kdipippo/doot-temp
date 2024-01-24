@@ -18,11 +18,11 @@ jobs:
       - name: Run PHP Script
         run: php ./health-check.php
         env:
-          PROD: ${{ secrets.ProdURL }}
-          DEV: ${{ secrets.DevURL }}
-          TRAINING: ${{ secrets.TrainingURL }}
-          TEST: ${{ secrets.TestURL }}
-          #HOOK: ${{ secrets.HookURL }}
+          PROD: ${{ secrets.PROD }}
+          DEV: ${{ secrets.DEV }}
+          TRAINING: ${{ secrets.TRAINING }}
+          TEST: ${{ secrets.TEST }}
+          #HOOK: ${{ secrets.HOOK }}
 
       - name: Setup Git
         run: |
