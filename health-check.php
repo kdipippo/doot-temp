@@ -10,10 +10,10 @@
  *   Input URL to check cURL against.
  *
  * @return (string)
- *   "success" if cURL returns success HTTP response code, "failed" if not after 4 attempts.
+ *   "success" if cURL returns success HTTP response code, "failed" if not after 2 attempts.
  */
 function getURLStatus(string $url): string {
-    for ($attempt = 0; $attempt < 4; $attempt++) {
+    for ($attempt = 0; $attempt < 2; $attempt++) {
         $response = shell_exec("curl --write-out '%{http_code}' --silent --output /dev/null $url");
         if (in_array($response, ["200", "202", "301", "302", "307"])) {
             return "success";
