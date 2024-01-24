@@ -16,7 +16,7 @@ jobs:
       - name: Testing PHP version
         run: php -v
       - name: Run PHP Script
-        run: php ./health-check.php
+        run: php ./scripts/health-check.php
         env:
           PROD: ${{ secrets.PROD }}
           DEV: ${{ secrets.DEV }}
