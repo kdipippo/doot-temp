@@ -9,11 +9,6 @@ jobs:
     runs-on: ubuntu-latest
     name: Check all sites
     steps:
-      - name: Setup Git
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-
       - uses: actions/checkout@v2
       - name: Install PHP
         uses: shivammathur/setup-php@v2
@@ -28,6 +23,10 @@ jobs:
           TEST: ${{ secrets.TestURL }}
           #HOOK: ${{ secrets.HookURL }}
 
+      - name: Setup Git
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
       - name: Commit changes
         run: |
           git add .
