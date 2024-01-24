@@ -22,6 +22,7 @@ jobs:
           DEV: ${{ secrets.DEV }}
           TRAINING: ${{ secrets.TRAINING }}
           TEST: ${{ secrets.TEST }}
+          TRDEV: ${{ secrets.TRDEV }}
           #HOOK: ${{ secrets.HOOK }}
 
       - name: Setup Git
