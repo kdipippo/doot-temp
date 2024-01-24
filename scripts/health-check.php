@@ -14,6 +14,43 @@ function getEnvVariable(string $envKey) {
 }
 
 /**
+ * curl --insecure --write-out '%{http_code}' --silent --output /dev/null https://example.com/
+ * --write-out is not a supported option
+ * --silent is not a supported option
+ * --output is not a supported option
+*/
+/**
+ * Get HTTP status code via cURL call using built-in PHP cURL library.
+ *
+ * @param (string) $url
+ *   URL to cURL for HTTP Status code.
+ * @param (bool) $sslCheck
+ *   True to perform cURL with SSL certification validation; False to disable SSL validation.
+ *
+ * @return (int)
+ *   Integer HTTP status code.
+ */
+function getURLHTTPCode(string $url, bool $sslCheck = True): int {
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'GET');
+    if (!$sslCheck) {
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, $sslCheck);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, $sslCheck);
+    }
+    curl_setopt($ch, CURLOPT_HEADER  , true);
+    curl_setopt($ch, CURLOPT_NOBODY  , true);
+
+    curl_exec($ch);
+    $httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    return $httpcode;
+}
+
+
+/**
  * Return "success" if basic cURL call to URL returns a valid HTTP response code.
  *
  * @param (string) $url
@@ -24,28 +61,27 @@ function getEnvVariable(string $envKey) {
  */
 function getURLStatus(string $url): string {
     for ($attempt = 0; $attempt < 2; $attempt++) {
-        // If SSL cert is invalid, $cURLsecure will return 200. Running both commands to see true status of site.
-        $cURLsecure = "curl --write-out '%{http_code}' --silent --output /dev/null $url";
-        $cURLinsecure = "curl --insecure --write-out '%{http_code}' --silent --output /dev/null $url";
-        $secureResponse = shell_exec($cURLsecure);
-        $insecureResponse = shell_exec($cURLinsecure);
+        // If site is live but SSL cert is invalid, $secureResponseCode will return 000.
+        // Running both commands will determine the true status of the site.
+        $secureResponseCode = getURLHTTPCode($url, True);
+        $insecureResponseCode = getURLHTTPCode($url, False);
 
-        echo "Attempt #{$attempt} : Secure Response = {$secureResponse}; Insecure Response = {$insecureResponse}";
+        echo "Attempt #{$attempt} : Secure Response = {$secureResponseCode}; Insecure Response = {$insecureResponseCode}\n";
 
         // Default to using secureResponse for checking unless SSL cert is invalid.
         $sslInvalid = False;
-        $response = $secureResponse;
-        if ($insecureResponse != $secureResponse) {
+        $responseCode = $secureResponseCode;
+        if ($insecureResponseCode != $secureResponseCode) {
             $sslInvalid = True;
-            $response = $insecureResponse;
+            $responseCode = $insecureResponseCode;
         }
 
-        if (in_array($response, ["200", "202", "301", "302", "307"])) {
+        if (in_array($responseCode, [200, 202, 301, 302, 307])) {
             return "success" . ($sslInvalid ? " but SSL is invalid" : "");
         }
         sleep(5);
     }
-    return "failed - encountered {$response} error code" . ($sslInvalid ? " and SSL is invalid" : "");
+    return "failed - encountered {$responseCode} error code" . ($sslInvalid ? " and SSL is invalid" : "");
 }
 
 /**
