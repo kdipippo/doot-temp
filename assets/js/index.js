@@ -55,7 +55,7 @@ function getColor(uptimeVal) {
   if (uptimeVal == 1) {
     return "success";
   }
-  if (uptimeVal < 0.3) {
+  if (uptimeVal >= 0.3) {
     return "partial";
   }
   return "failure";
