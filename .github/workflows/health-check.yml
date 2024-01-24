@@ -3,7 +3,7 @@ name: Scheduled Health Check
 on:
   workflow_dispatch:
   schedule:
-    - cron: '*/5 * * * *'
+    - cron: '*/15 * * * *'
 
 jobs:
   health_check_job:
