@@ -30,6 +30,8 @@ function getURLStatus(string $url): string {
         $secureResponse = shell_exec($cURLsecure);
         $insecureResponse = shell_exec($cURLinsecure);
 
+        echo "Attempt #{$attempt} : Secure Response = {$secureResponse}; Insecure Response = {$insecureResponse}";
+
         // Default to using secureResponse for checking unless SSL cert is invalid.
         $sslInvalid = False;
         $response = $secureResponse;
