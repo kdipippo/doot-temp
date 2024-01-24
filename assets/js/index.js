@@ -224,7 +224,7 @@ function splitRowsByDate(rows) {
     }
 
     let result = 0;
-    if (resultStr.trim().startswith("success")) {
+    if (resultStr.trim().startsWith("success")) {
       result = 1;
     }
     sum += result;
