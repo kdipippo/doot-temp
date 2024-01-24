@@ -3,6 +3,16 @@
  * PHP rewrite of https://github.com/statsig-io/statuspage/blob/main/health-check.sh.
  */
 
+// TODO - return type could be false if no key available instead of just strings.
+function getEnvVariable(string $envKey) {
+    $localEnvFilename = "./local.env";
+    if (file_exists($localEnvFilename)) {
+        $env = parse_ini_file('./local.env');
+        return $env[$envKey];
+    }
+    return getenv($envKey);
+}
+
 /**
  * Return "success" if basic cURL call to URL returns a valid HTTP response code.
  *
@@ -14,13 +24,26 @@
  */
 function getURLStatus(string $url): string {
     for ($attempt = 0; $attempt < 2; $attempt++) {
-        $response = shell_exec("curl --write-out '%{http_code}' --silent --output /dev/null $url");
+        // If SSL cert is invalid, $cURLsecure will return 200. Running both commands to see true status of site.
+        $cURLsecure = "curl --write-out '%{http_code}' --silent --output /dev/null $url";
+        $cURLinsecure = "curl --insecure --write-out '%{http_code}' --silent --output /dev/null $url";
+        $secureResponse = shell_exec($cURLsecure);
+        $insecureResponse = shell_exec($cURLinsecure);
+
+        // Default to using secureResponse for checking unless SSL cert is invalid.
+        $sslInvalid = False;
+        $response = $secureResponse;
+        if ($insecureResponse != $secureResponse) {
+            $sslInvalid = True;
+            $response = $insecureResponse;
+        }
+
         if (in_array($response, ["200", "202", "301", "302", "307"])) {
-            return "success";
+            return "success" . ($sslInvalid ? " but SSL is invalid" : "");
         }
         sleep(5);
     }
-    return "failed - encountered {$response} error code";
+    return "failed - encountered {$response} error code" . ($sslInvalid ? " and SSL is invalid" : "");
 }
 
 /**
@@ -53,11 +76,11 @@ function sendMessageToWebhook(string $dateTime, string $env, string $response): 
  */
 function runURLHealthCheck(bool $saveToLogs = True, bool $notifyWebhook = True): void {
     $envs_to_urls = [
-        "PROD"     => getenv('PROD'),
-        "DEV"      => getenv('DEV'),
-        "TEST"     => getenv('TEST'),
-        "TRAINING" => getenv('TRAINING'),
-        "TRDEV"    => getenv('TRDEV')
+        "PROD"     => getEnvVariable('PROD'),
+        "DEV"      => getEnvVariable('DEV'),
+        "TEST"     => getEnvVariable('TEST'),
+        "TRAINING" => getEnvVariable('TRAINING'),
+        "TRDEV"    => getEnvVariable('TRDEV')
     ];
 
     echo "***********************\n";
